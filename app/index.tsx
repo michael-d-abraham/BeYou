@@ -1,15 +1,63 @@
+import { Dropdown } from "@/components/Dropdown";
+import { Audio } from "expo-av";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { BellButton, GenericButton } from "../components/buttons";
 
 export default function Index() {
   const [selectedBell, setSelectedBell] = useState("bell2");
+  const [duration, setDuration] = useState("10");
+  const [interval, setInterval] = useState("3");
+  const [sounds, setSounds] = useState<{[key: string]: Audio.Sound}>({});
+
+  useEffect(() => {
+    loadSounds();
+    return () => {
+      // Cleanup sounds when component unmounts
+      Object.values(sounds).forEach(sound => {
+        if (sound) {
+          sound.unloadAsync();
+        }
+      });
+    };
+  }, []);
+
+  const loadSounds = async () => {
+    try {
+      const soundFiles = {
+        bell1: require('../assets/sounds/bell1.mp3'),
+        bell2: require('../assets/sounds/bell2.mp3'),
+        bell3: require('../assets/sounds/bell3.mp3'),
+      };
+
+      const loadedSounds: {[key: string]: Audio.Sound} = {};
+      
+      for (const [bellId, soundFile] of Object.entries(soundFiles)) {
+        const { sound } = await Audio.Sound.createAsync(soundFile);
+        loadedSounds[bellId] = sound;
+      }
+      
+      setSounds(loadedSounds);
+    } catch (error) {
+      console.log('Error loading sounds:', error);
+    }
+  };
+
+  const playBellSound = async (bellId: string) => {
+    try {
+      const sound = sounds[bellId];
+      if (sound) {
+        await sound.replayAsync();
+      }
+    } catch (error) {
+      console.log('Error playing sound:', error);
+    }
+  };
 
   const handleBellPress = (bellId: string) => {
     setSelectedBell(bellId);
-    // TODO: Play sound based on bellId
-    console.log("Selected bell:", bellId);
+    playBellSound(bellId);
   };
 
   const handleStartPress = () => {
@@ -18,8 +66,8 @@ export default function Index() {
       pathname: "/meditation",
       params: {
         bellId: selectedBell,
-        duration: "10", // This will come from your duration setting later
-        interval: "3", // This will come from your interval setting later
+        duration: duration,
+        interval: interval,
         soundId: selectedBell === "bell1" ? "singing_bowl_1" : 
                  selectedBell === "bell2" ? "singing_bowl_2" : "tibetan_bell"
       }
@@ -102,33 +150,19 @@ export default function Index() {
         shadowRadius: 8,
         elevation: 3
       }}>
-        <View style={{ 
-          flexDirection: 'row', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          paddingVertical: 18, 
-          borderBottomWidth: 1, 
-          borderBottomColor: '#333'
-        }}>
-          <Text style={{ color: 'white', fontSize: 17, fontWeight: '500' }}>Duration</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ color: '#ff6b35', fontSize: 17, fontWeight: '600', marginRight: 8 }}>10 minutes</Text>
-            <Text style={{ color: '#888', fontSize: 14 }}>▼</Text>
-          </View>
-        </View>
+        <Dropdown
+          label="Duration"
+          type="duration"
+          selectedValue={duration}
+          onValueChange={setDuration}
+        />
         
-        <View style={{ 
-          flexDirection: 'row', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          paddingVertical: 18
-        }}>
-          <Text style={{ color: 'white', fontSize: 17, fontWeight: '500' }}>Interval bells</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ color: '#ff6b35', fontSize: 17, fontWeight: '600', marginRight: 8 }}>every 3 min</Text>
-            <Text style={{ color: '#888', fontSize: 14 }}>▼</Text>
-          </View>
-        </View>
+        <Dropdown
+          label="Interval bells"
+          type="interval"
+          selectedValue={interval}
+          onValueChange={setInterval}
+        />
       </View>
       
       {/* Start Button */}
