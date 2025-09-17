@@ -9,7 +9,7 @@ import Svg, { Circle } from "react-native-svg";
 export default function Meditation() {
   const { duration, bellId, interval } = useLocalSearchParams();
   const [phase, setPhase] = useState<'prep' | 'meditation' | 'complete'>('prep');
-  const [prepTime, setPrepTime] = useState(10);
+  const [prepTime, setPrepTime] = useState(3);
   const [timeLeft, setTimeLeft] = useState(parseInt(duration as string) * 60);
   const [isPaused, setIsPaused] = useState(false);
   const [lastIntervalTime, setLastIntervalTime] = useState(0);
