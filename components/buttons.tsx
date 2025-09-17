@@ -1,24 +1,17 @@
 import { useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
-
 type BellButtonProps = { 
   onPress: () => void; 
   isSelected: boolean; 
   id: string;
-  image?: any; // For now using any, can be more specific later
+  image?: any;
   soundId?: string;
 };
 
 export const BellButton = ({ onPress, isSelected, id, image, soundId }: BellButtonProps) => (
-  <Pressable onPress={onPress} style={[
-    styles.bellButton,
-    isSelected && styles.selectedBellButton
-  ]}>
-    <View style={[
-      styles.bellCircle,
-      isSelected && styles.selectedBellCircle
-    ]}>
+  <Pressable onPress={onPress} style={styles.bellButton}>
+    <View style={[styles.bellCircle, isSelected && styles.selectedBellCircle]}>
       {image && (
         <Image 
           source={image} 
@@ -43,10 +36,7 @@ export const GenericButton = ({ onPress, text }: GenericButtonProps) => {
       onPress={onPress} 
       onPressIn={() => setIsPressed(true)}
       onPressOut={() => setIsPressed(false)}
-      style={[
-        styles.genericButton,
-        isPressed && styles.genericButtonPressed
-      ]}
+      style={[styles.genericButton, isPressed && styles.genericButtonPressed]}
     >
       <Text style={styles.genericButtonText}>{text}</Text>
     </Pressable>
@@ -54,32 +44,8 @@ export const GenericButton = ({ onPress, text }: GenericButtonProps) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f8f8f8",
-  },
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    margin: 8,
-    borderRadius: 8,
-    backgroundColor: "#D7A1F9",
-  },
-  text: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "white",
-  },
   bellButton: {
     marginHorizontal: 12,
-  },
-  selectedBellButton: {
-    // Additional styles for selected state if needed
   },
   bellCircle: {
     width: 70, 

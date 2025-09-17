@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 type DropdownProps = {
   label: string;
@@ -9,6 +9,7 @@ type DropdownProps = {
 };
 
 const DURATION_OPTIONS = [
+  { label: "1 minutes", value: "1" },
   { label: "5 minutes", value: "5" },
   { label: "10 minutes", value: "10" },
   { label: "15 minutes", value: "15" },
@@ -46,18 +47,20 @@ export const Dropdown = ({ label, selectedValue, onValueChange, type }: Dropdown
       
       {isOpen && (
         <View style={styles.options}>
-          {options.map((option) => (
-            <Pressable
-              key={option.value}
-              style={styles.option}
-              onPress={() => {
-                onValueChange(option.value);
-                setIsOpen(false);
-              }}
-            >
-              <Text style={styles.optionText}>{option.label}</Text>
-            </Pressable>
-          ))}
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            {options.map((option) => (
+              <Pressable
+                key={option.value}
+                style={styles.option}
+                onPress={() => {
+                  onValueChange(option.value);
+                  setIsOpen(false);
+                }}
+              >
+                <Text style={styles.optionText}>{option.label}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>
@@ -98,7 +101,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2a2a',
     borderRadius: 8,
     marginTop: 4,
-    zIndex: 1000,
+    zIndex: 99999,
+    elevation: 99999,
+    maxHeight: 200,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+  },
+  scrollView: {
+    maxHeight: 200,
   },
   option: {
     paddingVertical: 12,

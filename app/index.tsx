@@ -1,9 +1,9 @@
-import { Dropdown } from "@/components/Dropdown";
 import { Audio } from "expo-av";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { BellButton, GenericButton } from "../components/buttons";
+import { Dropdown } from "../components/Dropdown";
 
 export default function Index() {
   const [selectedBell, setSelectedBell] = useState("bell2");
@@ -12,47 +12,46 @@ export default function Index() {
   const [sounds, setSounds] = useState<{[key: string]: Audio.Sound}>({});
 
   useEffect(() => {
+    setupAudio();
     loadSounds();
-    return () => {
-      // Cleanup sounds when component unmounts
-      Object.values(sounds).forEach(sound => {
-        if (sound) {
-          sound.unloadAsync();
-        }
-      });
-    };
+    return () => Object.values(sounds).forEach(sound => sound.unloadAsync());
   }, []);
 
-  const loadSounds = async () => {
-    try {
-      const soundFiles = {
-        bell1: require('../assets/sounds/bell1.mp3'),
-        bell2: require('../assets/sounds/bell2.mp3'),
-        bell3: require('../assets/sounds/bell3.mp3'),
-      };
+  const setupAudio = async () => {
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      staysActiveInBackground: false,
+      playsInSilentModeIOS: true,
+      shouldDuckAndroid: true,
+      playThroughEarpieceAndroid: false,
+    });
+  };
 
-      const loadedSounds: {[key: string]: Audio.Sound} = {};
-      
-      for (const [bellId, soundFile] of Object.entries(soundFiles)) {
-        const { sound } = await Audio.Sound.createAsync(soundFile);
-        loadedSounds[bellId] = sound;
-      }
-      
-      setSounds(loadedSounds);
-    } catch (error) {
-      console.log('Error loading sounds:', error);
+  const loadSounds = async () => {
+    const soundFiles = {
+      bell1: require('../assets/sounds/bell1.mp3'),
+      bell2: require('../assets/sounds/bell2.mp3'),
+      bell3: require('../assets/sounds/bell3.mp3'),
+    };
+
+    const loadedSounds: {[key: string]: Audio.Sound} = {};
+    for (const [bellId, soundFile] of Object.entries(soundFiles)) {
+      const { sound } = await Audio.Sound.createAsync(soundFile);
+      loadedSounds[bellId] = sound;
     }
+    setSounds(loadedSounds);
   };
 
   const playBellSound = async (bellId: string) => {
-    try {
-      const sound = sounds[bellId];
-      if (sound) {
-        await sound.replayAsync();
-      }
-    } catch (error) {
-      console.log('Error playing sound:', error);
-    }
+    Object.entries(sounds).forEach(([id, sound]) => {
+      if (id !== bellId) sound.stopAsync();
+    });
+    const sound = sounds[bellId];
+    if (sound) await sound.replayAsync();
+  };
+
+  const pauseAllBells = () => {
+    Object.values(sounds).forEach(sound => sound.stopAsync());
   };
 
   const handleBellPress = (bellId: string) => {
@@ -61,16 +60,10 @@ export default function Index() {
   };
 
   const handleStartPress = () => {
-    // Navigate to meditation page with data props
+    pauseAllBells();
     router.push({
       pathname: "/meditation",
-      params: {
-        bellId: selectedBell,
-        duration: duration,
-        interval: interval,
-        soundId: selectedBell === "bell1" ? "singing_bowl_1" : 
-                 selectedBell === "bell2" ? "singing_bowl_2" : "tibetan_bell"
-      }
+      params: { bellId: selectedBell, duration, interval }
     });
   };
 
@@ -109,21 +102,21 @@ export default function Index() {
           isSelected={selectedBell === "bell1"}
           onPress={() => handleBellPress("bell1")}
           soundId="singing_bowl_1"
-          image={require('../assets/images/bell.png')}
+          image={require('../assets/images/bell1.png')}
         />
         <BellButton 
           id="bell2"
           isSelected={selectedBell === "bell2"}
           onPress={() => handleBellPress("bell2")}
           soundId="singing_bowl_2"
-          image={require('../assets/images/bell.png')}
+          image={require('../assets/images/bell2.png')}
         />
         <BellButton 
           id="bell3"
           isSelected={selectedBell === "bell3"}
           onPress={() => handleBellPress("bell3")}
           soundId="tibetan_bell"
-          image={require('../assets/images/bell.png')}
+          image={require('../assets/images/bell3.png')}
         />
       </View>
       
@@ -139,16 +132,7 @@ export default function Index() {
       </Text>
       
       {/* Settings */}
-      <View style={{ 
-        backgroundColor: '#1a1a1a',
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 40,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 3
+      <View style={{
       }}>
         <Dropdown
           label="Duration"
@@ -166,7 +150,7 @@ export default function Index() {
       </View>
       
       {/* Start Button */}
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', zIndex: 0 }}>
         <GenericButton 
           text="Start"
           onPress={handleStartPress}
