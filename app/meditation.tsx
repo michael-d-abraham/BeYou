@@ -1,5 +1,6 @@
-import { Audio } from "expo-av";
-import { useLocalSearchParams } from "expo-router";
+import { Ionicons } from '@expo/vector-icons';
+import { useAudioPlayer } from "expo-audio";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, { useAnimatedProps, useSharedValue, withTiming } from "react-native-reanimated";
@@ -11,19 +12,19 @@ export default function Meditation() {
   const [prepTime, setPrepTime] = useState(10);
   const [timeLeft, setTimeLeft] = useState(parseInt(duration as string) * 60);
   const [isPaused, setIsPaused] = useState(false);
-  const [sounds, setSounds] = useState<{[key: string]: Audio.Sound}>({});
-  const [intervalSound, setIntervalSound] = useState<Audio.Sound | null>(null);
   const [lastIntervalTime, setLastIntervalTime] = useState(0);
+  
+  // Create audio players
+  const bell1Player = useAudioPlayer(require('../assets/sounds/bells/bell1.mp3'));
+  const bell2Player = useAudioPlayer(require('../assets/sounds/bells/bell2.mp3'));
+  const bell3Player = useAudioPlayer(require('../assets/sounds/bells/bell3.mp3'));
+  const intervalPlayer = useAudioPlayer(require('../assets/sounds/interval/longbell.mp3'));
   
   const progress = useSharedValue(0);
   const totalTime = parseInt(duration as string) * 60;
   const intervalMinutes = parseInt(interval as string);
   const AnimatedCircle = Animated.createAnimatedComponent(Circle);
   
-  useEffect(() => {
-    loadSounds();
-  }, []);
-
   useEffect(() => {
     if (phase === 'prep' && prepTime > 0) {
       const timer = setTimeout(() => setPrepTime(prepTime - 1), 1000);
@@ -48,7 +49,7 @@ export default function Meditation() {
   }, [phase, timeLeft, isPaused, totalTime]);
 
   const checkIntervalBell = (currentTimeLeft: number) => {
-    if (intervalMinutes > 0 && intervalSound) {
+    if (intervalMinutes > 0) {
       const elapsedTime = totalTime - currentTimeLeft;
       const minutesElapsed = Math.floor(elapsedTime / 60);
       
@@ -59,32 +60,22 @@ export default function Meditation() {
     }
   };
 
-  const playIntervalBell = async () => {
-    if (intervalSound) await intervalSound.replayAsync();
+  const playIntervalBell = () => {
+    intervalPlayer.seekTo(0);
+    intervalPlayer.play();
   };
 
-  const loadSounds = async () => {
-    const soundFiles = {
-      bell1: require('../assets/sounds/bell1.mp3'),
-      bell2: require('../assets/sounds/bell2.mp3'),
-      bell3: require('../assets/sounds/bell3.mp3'),
-    };
-    const loadedSounds: {[key: string]: Audio.Sound} = {};
-    for (const [id, soundFile] of Object.entries(soundFiles)) {
-      const { sound } = await Audio.Sound.createAsync(soundFile);
-      loadedSounds[id] = sound;
+  const playBell = () => {
+    if (bellId === "bell1") {
+      bell1Player.seekTo(0);
+      bell1Player.play();
+    } else if (bellId === "bell2") {
+      bell2Player.seekTo(0);
+      bell2Player.play();
+    } else if (bellId === "bell3") {
+      bell3Player.seekTo(0);
+      bell3Player.play();
     }
-    setSounds(loadedSounds);
-
-    if (intervalMinutes > 0) {
-      const { sound } = await Audio.Sound.createAsync(require('../assets/sounds/interval.mp3'));
-      setIntervalSound(sound);
-    }
-  };
-
-  const playBell = async () => {
-    const sound = sounds[bellId as string];
-    if (sound) await sound.replayAsync();
   };
 
   const startMeditation = () => {
@@ -109,6 +100,12 @@ export default function Meditation() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ position: 'absolute', top: 60, left: 20, zIndex: 10 }}>
+        <Pressable onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={24} color="white" />
+        </Pressable>
+      </View>
+
       <View style={{ position: 'relative', marginBottom: 80 }}>
         <Svg width={300} height={300}>
           <Circle cx={150} cy={150} r={140} stroke="#333" strokeWidth={12} fill="none" />
@@ -149,7 +146,7 @@ export default function Meditation() {
                 Your {Math.floor(totalTime / 60)} minute meditation has ended
               </Text>
               <Text style={{ color: '#888', fontSize: 18, textAlign: 'center' }}>
-                Thank you for your patience
+                Thank you for your practice
               </Text>
             </>
           )}

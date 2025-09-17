@@ -1,4 +1,4 @@
-import { Audio } from "expo-av";
+import { setAudioModeAsync, useAudioPlayer } from "expo-audio";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
@@ -9,49 +9,58 @@ export default function Index() {
   const [selectedBell, setSelectedBell] = useState("bell2");
   const [duration, setDuration] = useState("10");
   const [interval, setInterval] = useState("3");
-  const [sounds, setSounds] = useState<{[key: string]: Audio.Sound}>({});
+  
+  // Create audio players for each bell
+  const bell1Player = useAudioPlayer(require('../assets/sounds/bells/bell1.mp3'));
+  const bell2Player = useAudioPlayer(require('../assets/sounds/bells/bell2.mp3'));
+  const bell3Player = useAudioPlayer(require('../assets/sounds/bells/bell3.mp3'));
 
   useEffect(() => {
     setupAudio();
-    loadSounds();
-    return () => Object.values(sounds).forEach(sound => sound.unloadAsync());
   }, []);
 
   const setupAudio = async () => {
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      staysActiveInBackground: false,
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: true,
-      playThroughEarpieceAndroid: false,
+    await setAudioModeAsync({
+      playsInSilentMode: true,
+      allowsRecording: false,
     });
-  };
-
-  const loadSounds = async () => {
-    const soundFiles = {
-      bell1: require('../assets/sounds/bell1.mp3'),
-      bell2: require('../assets/sounds/bell2.mp3'),
-      bell3: require('../assets/sounds/bell3.mp3'),
-    };
-
-    const loadedSounds: {[key: string]: Audio.Sound} = {};
-    for (const [bellId, soundFile] of Object.entries(soundFiles)) {
-      const { sound } = await Audio.Sound.createAsync(soundFile);
-      loadedSounds[bellId] = sound;
-    }
-    setSounds(loadedSounds);
   };
 
   const playBellSound = async (bellId: string) => {
-    Object.entries(sounds).forEach(([id, sound]) => {
-      if (id !== bellId) sound.stopAsync();
-    });
-    const sound = sounds[bellId];
-    if (sound) await sound.replayAsync();
+    // Stop all other bells first
+    if (bellId !== "bell1") {
+      bell1Player.seekTo(0);
+      bell1Player.pause();
+    }
+    if (bellId !== "bell2") {
+      bell2Player.seekTo(0);
+      bell2Player.pause();
+    }
+    if (bellId !== "bell3") {
+      bell3Player.seekTo(0);
+      bell3Player.pause();
+    }
+    
+    // Play selected bell
+    if (bellId === "bell1") {
+      bell1Player.seekTo(0);
+      bell1Player.play();
+    } else if (bellId === "bell2") {
+      bell2Player.seekTo(0);
+      bell2Player.play();
+    } else if (bellId === "bell3") {
+      bell3Player.seekTo(0);
+      bell3Player.play();
+    }
   };
 
   const pauseAllBells = () => {
-    Object.values(sounds).forEach(sound => sound.stopAsync());
+    bell1Player.seekTo(0);
+    bell1Player.pause();
+    bell2Player.seekTo(0);
+    bell2Player.pause();
+    bell3Player.seekTo(0);
+    bell3Player.pause();
   };
 
   const handleBellPress = (bellId: string) => {

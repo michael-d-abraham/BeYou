@@ -58,4 +58,4 @@ Screen shot of my outline of my project
 I used these two packages
 
 1. Animated from react-native-reanimated
-2. audio from expo-av
+2. setAudioModeAsync, useAudioPlayer from expo-audio
